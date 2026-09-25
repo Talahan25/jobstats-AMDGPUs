@@ -9,11 +9,8 @@ PROM_RETENTION_DAYS = 365
 # number of seconds between measurements
 SAMPLING_PERIOD = 30
 
-# Set to True if GPU stats have jobid label as opposed to using nvidia_gpu_jobId
-# This is available as of version 0.2.2 Sept 2025 in the repo
-# https://github.com/plazonic/nvidia_gpu_prometheus_exporter/
-# Using nvidia_gpu_jobId is not recommended due to poor performance.
-GPU_EXPORTER_JOBID = True
+# Set to True if GPU stats have "job_id" label as opposed to "jobid"
+AMD_EXPORTER_JOBID = True
 
 # If using Slurm database then include the lines below with "enabled": False
 # If using MariaDB/MySQL then set "enabled": True
@@ -56,7 +53,7 @@ MIN_RUNTIME_SECONDS   = 10 * SAMPLING_PERIOD  # seconds
 ################################################################################
 ##                 D E T A I L E D    G P U    M E T R I C S                  ##
 ################################################################################
-GPU_METRICS_EXPORTER = "NVML"  # choices are "None", "NVML" or "DCGM"
+GPU_METRICS_EXPORTER = "AMD"  # choices are "None" and "AMD"
 GPU_METRICS = {}
 GPU_METRICS["SM"] = {"metric": "sm_util_percent",
                      "operation": "avg_over_time",
