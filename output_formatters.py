@@ -457,7 +457,7 @@ class ClassicOutput(BaseFormatter):
                         value_str = str(value)
                     this_metric.append(value_str)
                 columns.append(this_metric)   
-                row_labels = [f"    {node} (GPU {idx})  " for node, _, idx in gm.node_value_index]
+                row_labels = [f"    {node.split('.')[0]} (GPU {idx})  " for node, _, idx in gm.node_value_index]
         if not headers:
             return ""
         col_widths = [max(len(header), max((len(val) for val in col), default=0))
@@ -527,13 +527,14 @@ class ClassicOutput(BaseFormatter):
         report += f"{gutter}CPU utilization per node (CPU time used/run time)\n"
         if self.js.cpu_util_error_code == 0:
             for node, used, alloc, cores in self.js.cpu_util__node_used_alloc_cores:
+                short_node = node.split('.')[0] if node else node
                 msg = ""
                 if used == 0:
                     msg = f" {self.txt_bold}{self.txt_red}<-- CPU node was not used{self.txt_normal}"
                 hs_used = self.human_seconds(used)
                 hs_alloc = self.human_seconds(alloc)
                 eff = 100 * used / alloc
-                report += f"{gutter}    {node}: {hs_used}/{hs_alloc} (efficiency={eff:.1f}%){msg}\n"
+                report += f"{gutter}    {short_node}: {hs_used}/{hs_alloc} (efficiency={eff:.1f}%){msg}\n"
             if self.js.nnodes != "1":
                 used, alloc, _ = self.js.cpu_util_total__used_alloc_cores
                 hs_used = self.human_seconds(used)
@@ -545,8 +546,9 @@ class ClassicOutput(BaseFormatter):
         # CPU memory usage
         report += f"\n{gutter}CPU memory usage per node - used/allocated\n"
         for node, used, alloc, cores in self.js.cpu_mem__node_used_alloc_cores:
+            short_node = node.split('.')[0] if node else node
             hb_alloc = self.human_bytes(alloc).replace(".0GB", "GB")
-            report += f"{gutter}    {node}: {self.human_bytes(used)}/{hb_alloc} "
+            report += f"{gutter}    {short_node}: {self.human_bytes(used)}/{hb_alloc} "
             if self.js.ncpus == "1":
                 report += "\n"
             else:
@@ -563,6 +565,7 @@ class ClassicOutput(BaseFormatter):
             report += f"\n{gutter}GPU utilization per node\n"
             if self.js.gpu_util_error_code == 0:
                 for node, util, gpu_index in self.js.gpu_util__node_util_index:
+                    short_node = node.split('.')[0] if node else node
                     msg = ""
                     if util == 0:
                         util = "0%"
@@ -575,17 +578,18 @@ class ClassicOutput(BaseFormatter):
                             msg = "GPU utilization is unknown"
                     else:
                         util = f"{util}%"
-                    report += f"{gutter}    {node} (GPU {gpu_index}): {util}{msg}\n"
+                    report += f"{gutter}    {short_node} (GPU {gpu_index}): {util}{msg}\n"
             else:
                  report += f"{gutter}    An error was encountered ({self.js.gpu_util_error_code})\n"
             # GPU memory usage
             report += f"\n{gutter}GPU memory usage per node - maximum used/total\n"
             if self.js.gpu_mem_error_code == 0:
                 for node, used, total, gpu_index in self.js.gpu_mem__node_used_total_index:
-                    hs_used = self.human_bytes(used)
-                    hs_total = self.human_bytes(total).replace(".0GB", "GB")
+                    short_node = node.split('.')[0] if node else node
+                    hs_used = self.human_bytes(used * 1024 * 1024)
+                    hs_total = self.human_bytes(total * 1024 * 1024).replace(".0GB", "GB")
                     eff = 100 * used / total
-                    report += f"{gutter}    {node} (GPU {gpu_index}): {hs_used}/{hs_total} ({eff:.1f}%)\n"
+                    report += f"{gutter}    {short_node} (GPU {gpu_index}): {hs_used}/{hs_total} ({eff:.1f}%)\n"
             else:
                 report += f"{gutter}    An error was encountered ({self.js.gpu_mem_error_code})\n"
             # detailed GPU metrics
@@ -594,7 +598,6 @@ class ClassicOutput(BaseFormatter):
                 if len(self.js.detailed_gpu_metrics) > 3:
                     report += "\n  Detailed GPU Metrics\n"
                     report += self.grid_detailed_gpu_metrics() + "\n"
-                    report += "                         https://princetonuniversity.github.io/jobstats/setup/detailed_gpu_metrics/\n"
                 else:
                     for gm in self.js.detailed_gpu_metrics:
                         metric_found_in_prom = bool(gm.total__value_gpus[1])
