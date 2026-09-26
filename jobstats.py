@@ -386,21 +386,12 @@ class Jobstats:
             self.error(f"Operation {op} is not a supported Prometheus function.")
         metrics = {}
         if c.GPU_METRICS_EXPORTER == "AMD":
-            metrics["duty_cycle"]              = "gpu_gfx_activity"
-            metrics["memory_used_bytes"]       = "gpu_used_vram"
-            metrics["memory_total_bytes"]      = "gpu_total_vram"
-            metrics["sm_util_percent"]         = "gpu_gfx_activity"
-            metrics["sm_occupancy_percent"]    = "gpu_gfx_activity"
-            metrics["any_tensor_util_percent"] = "gpu_gfx_activity"
-            metrics["fp16_util_percent"]       = "gpu_gfx_activity"
-            metrics["fp32_util_percent"]       = "gpu_gfx_activity"
-            metrics["fp64_util_percent"]       = "gpu_gfx_activity"
-            metrics["integer_util"]            = "gpu_gfx_activity"
-            metrics["dram_bw_util_percent"]    = "gpu_umc_activity"
+            metrics["gpu_gfx_activity"]        = "gpu_gfx_activity"
+            metrics["gpu_umc_activity"]        = "gpu_umc_activity"
             metrics["pcie_rx_per_sec"]         = "pcie_rx"
             metrics["pcie_tx_per_sec"]         = "pcie_tx"
-            metrics["nvlink_total_rx_per_sec"] = "gpu_xgmi_nbr_0_tx_thrput"
-            metrics["nvlink_total_tx_per_sec"] = "gpu_xgmi_nbr_1_tx_thrput"
+            metrics["xgmi_total_rx_per_sec"]   = "gpu_xgmi_nbr_0_tx_thrput"
+            metrics["xgmi_total_tx_per_sec"]   = "gpu_xgmi_nbr_1_tx_thrput"
             metrics["temperature_celsius"]     = "gpu_junction_temperature"
             metrics["power_usage_milliwatts"]  = "gpu_average_package_power"
         
@@ -563,17 +554,10 @@ class Jobstats:
                     self.write_to_db  = settings["write_to_db"]
                     self.long_name    = settings.get("long_name")
                     self.is_mig = is_mig
-                    ms = ("sm", "fp16", "fp32", "fp64", "tensor", "integer", "occupancy", "dram")
+                    ms = ("activity", "gfx", "umc", "util", "occupancy")
                     self.is_percentage = any(m in self.metric for m in ms)
-                    if self.is_percentage:
-                        self.fac = 1
-                    elif "power" in self.metric:
-                        self.fac = 0.001
-                    else:
-                        self.fac = 1
-                    # finally correct duty_cycle
-                    if "duty" in self.metric:
-                        self.is_percentage = True
+                    self.fac = 1
+
                     # internal metric name for summary statistics
                     self.__name_ss = Jobstats.internal_detailed_metric_name(self.metric,
                                                                             self.operation)
