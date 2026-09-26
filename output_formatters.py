@@ -432,26 +432,30 @@ class ClassicOutput(BaseFormatter):
     def grid_detailed_gpu_metrics(self) -> str:
         """Return the grid of metrics as a string. By only allowing for metrics
            with a zero error code, one can ensure that each list of values has
-           has the same length."""
+           the same length."""
         if not self.js.detailed_gpu_metrics:
             return ""
         headers = []
         columns = []
+        row_labels = []
         for gm in self.js.detailed_gpu_metrics:
             metric_found_in_prom = bool(gm.total__value_gpus[1])
             if metric_found_in_prom and gm.show_per_gpu and gm.error_code == 0:
                 headers.append(gm.name)
                 this_metric = []
+                metric_lower = (gm.metric + " " + gm.name).lower()
                 for _, value, _ in gm.node_value_index:
-                    if "power" in gm.metric:
+                    if value is None:
+                        value_str = "N/A"
+                    elif "power" in metric_lower:
                         value_str = str(round(value)) + "W"
-                    elif "temperature" in gm.metric:
+                    elif "temp" in metric_lower:
                         value_str = str(round(value)) + "\u00B0" + "C"
-                    elif "rx" in gm.metric or "tx" in gm.metric:
+                    elif any(x in metric_lower for x in ("rx", "tx", "pcie", "xgmi")):
                         value_str = str(self.human_bytes(round(value), 0)) + "/s"
-                    elif any(x in gm.metric for x in ("sm", "occup", "dram")):
+                    elif any(x in metric_lower for x in ("gfx", "umc", "activity", "util", "sm", "occup", "dram")):
                         value_str = str(round(value)) + "%"
-                    elif any(x in gm.metric for x in ("duty", "tensor", "fp", "integer")):
+                    elif any(x in metric_lower for x in ("duty", "tensor", "fp", "integer")):
                         value_str = str(round(value, 1)) + "%"
                     else:
                         value_str = str(value)
