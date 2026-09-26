@@ -556,6 +556,7 @@ class Jobstats:
                     self.is_mig = is_mig
                     ms = ("activity", "gfx", "umc", "util", "occupancy")
                     self.is_percentage = any(m in self.metric for m in ms)
+                    self.fac = 1
 
                     # internal metric name for summary statistics
                     self.__name_ss = Jobstats.internal_detailed_metric_name(self.metric,
